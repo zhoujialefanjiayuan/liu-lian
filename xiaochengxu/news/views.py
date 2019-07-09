@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime
 from itertools import chain
 
@@ -17,9 +18,12 @@ def to_dict(obj):
     '''将当前对象转换成字典'''
     attr_dict = {}
     for field in obj._meta.get_fields():
-        name = field.attname  # 属性名
-        value = getattr(obj, name)  # 属性值
-        attr_dict[name] = value
+        try:
+            name = field.attname  # 属性名
+            value = getattr(obj, name)  # 属性值
+            attr_dict[name] = value
+        except:
+            continue
     return attr_dict
 
 
@@ -37,20 +41,26 @@ def write_news(request):
     img2= request.POST.get('img2')
     img3 = request.POST.get('img3')
 
-    # t = get_time()
-
-    try:
-        new = News.objects.get_or_create(userid= userid,title =title,
-                                         content=content,only_title = only_title,
-                                         img1=img1,img2=img2,img3=img3,)
-        user = User.objects.filter(userid=userid)[0]
+    # 判断是否重复发帖
+    isduplity=News.objects.filter(only_title = only_title,isdelete=0)
+    if isduplity.exists():
+        data = {'status': 0, 'code': '标题已重复不可用，请更换标题或在标题尾部添加数字以区分'}
+        return JsonResponse(data)
+    else:
+        new = News()
+        new.userid= userid
+        new.title =title
+        new.content=content
+        new.only_title = only_title
+        new.img1=img1
+        new.img2=img2
+        new.img3=img3
+        new.save()
+        user = User.objects.get(userid=userid)
         user.experience += 10
         user.post_num += 1
         user.save()
-    except Exception as e:
-        data = {'status':0,'code': '标题已重复不可用，请更换标题或在标题尾部添加数字以区分'}
-        return JsonResponse(data)
-    return JsonResponse({'status':1,'code':'发贴成功'})
+        return JsonResponse({'status':1,'code':'发贴成功'})
 
 
 
@@ -116,12 +126,13 @@ def choiceness_news(requset):
 #社区搜索帖子
 def search(request):
     keyword = request.GET.get('keyword')
-    index_news = News.objects.filter(title__contains=keyword)
+    index_news = News.objects.filter(title__contains=keyword,isdelete = 0).order_by('-comment_num')
     list_data = []
     for news in index_news:
         obj = {}
         one = to_dict(news)
         one['tiezi_id'] = one.pop('id')
+        one['time'] = str(one['time'])[:19].replace('T',' ')
         one.pop('only_title')
         obj['tiezi_data'] = one
 
@@ -148,17 +159,18 @@ def topnews(request):
     page = int(page)
     sum_news = cache.get('sum_news')
     if sum_news == None:
-        thetop = News.objects.filter(top=1)
-        allnews = News.objects.exclude(top=1)
-        nownews = allnews.order_by('-time')[0:5]
-        commentnews = allnews.order_by('-comment_num')[0:300]
-        sum_news = chain(thetop,nownews,commentnews)
+        thetop = News.objects.filter(top=1,isdelete = 0)
+        allnews = News.objects.filter(top=0,isdelete = 0).order_by('-time')
+        nownews = allnews[:5]
+        commentnews = sorted(allnews[5:],key=lambda item : item.comment_num,reverse=True)
+        sum_news = list(chain(thetop,nownews,commentnews))
         cache.set('sum_news', sum_news,5)
-    toshownews = list(sum_news)[(page-1)*25:page*25]
+    toshownews = sum_news[(page-1)*25:page*25]
     list_data = []
     for thenews in toshownews:
         obj = {}
         tiezi = to_dict(thenews)
+        tiezi['time'] = str(tiezi['time'])[:19].replace('T',' ')
         openId = tiezi['userid'][:-3]
         user = User.objects.get(openId=openId)
         tow = {}
@@ -194,6 +206,7 @@ def focousenews(request):
         for tiezi in  tiezis:
             obj = {}
             tiezi_data = to_dict(tiezi)
+            tiezi_data['time'] = str(tiezi_data['time'])[:19].replace('T',' ')
             obj['user'] = user_data
             obj['tiezi'] = tiezi_data
             list_data.append(obj)
@@ -205,9 +218,9 @@ def focousenews(request):
 
 
 #轮播图帖子 id必须与数据库中所有帖子id一致
-#@cache_page(60*6,cache='longtime')
+@cache_page(60*60,cache='longtime')
 def swipper(request):
-    index_news = News.objects.filter(isswiper = 1)
+    index_news = News.objects.filter(isswiper = 1,isdelete = 0)
     list_data = []
     for news in index_news:
         obj = {}
@@ -296,7 +309,6 @@ def side_comment(request):
 
 
 #展示帖子详情
-
 def show_detail(request):
     tiezi_id = request.POST.get('id')
     userid = request.POST.get('userid')
@@ -312,7 +324,7 @@ def show_detail(request):
     tiezi_data['img1'] = news.img1
     tiezi_data['img2'] = news.img2
     tiezi_data['img3'] = news.img3
-    tiezi_data['time'] = news.time
+    tiezi_data['time'] = str(news.time)[:19].replace('T',' ')
     tiezi_data['content'] = news.content
 
     # 判断当前用户是否点赞主贴
@@ -335,7 +347,7 @@ def show_detail(request):
     tiezi_data['writor_avatarUrl'] = writor.avatarUrl
 
 
-    maincomments = Main_comment.objects.filter(tiezi_id=tiezi_id).order_by('id')
+    maincomments = Main_comment.objects.filter(tiezi_id=tiezi_id).order_by('-good_num','-id')
     main_list = []
     for maincomment in maincomments:
         main_data = {}
@@ -359,7 +371,7 @@ def show_detail(request):
 
 
 
-        sidecomments = Side_comment.objects.filter(main_comment_id=mian_id).order_by('id')
+        sidecomments = Side_comment.objects.filter(main_comment_id=mian_id).order_by('-id')
         side_list = []
         for sidecomment in sidecomments:
             side_data = {}
@@ -467,11 +479,14 @@ def show_mycollect(request):
 
         for collect in collects:
             tiezi_id = collect.tiezi_id
-            news = News.objects.get(id=tiezi_id)
-
+            thenews = News.objects.filter(id=tiezi_id,isdelete = 0)
+            if thenews.exists() == False:
+                continue
+            news = thenews[0]
             obj = {}
             one = to_dict(news)
             one['tiezi_id'] = tiezi_id
+            one['time'] = str(one['time'])[:19].replace('T',' ')
             one.pop('id')
             one.pop('only_title')
             obj['tiezi_data'] = one
@@ -510,12 +525,16 @@ def show_mycomment(request):
         for comment in comments:
             tiezi_id = comment.tiezi_id
             set_tiezi_id.add(tiezi_id)
-
+        set_tiezi_id = sorted(set_tiezi_id, key=lambda x: x, reverse=True)
         for tiezi_id in set_tiezi_id:
-            news = News.objects.get(id=tiezi_id)
+            thenews = News.objects.filter(id=tiezi_id, isdelete=0)
+            if thenews.exists() == False:
+                continue
             obj = {}
+            news = thenews[0]
             one = to_dict(news)
             one['tiezi_id'] = tiezi_id
+            one['time'] = str(one['time'])[:19].replace('T', ' ')
             one.pop('id')
             one.pop('only_title')
             obj['tiezi_data'] = one
@@ -549,11 +568,14 @@ def show_mygood(request):
     if goods.exists():
         for good in goods:
             tiezi_id = good.tiezi_id
-            news = News.objects.get(id=tiezi_id)
-
+            thenews = News.objects.filter(id=tiezi_id, isdelete=0)
+            if thenews.exists() == False:
+                continue
             obj = {}
+            news = thenews[0]
             one = to_dict(news)
             one['tiezi_id'] = tiezi_id
+            one['time'] = str(one['time'])[:19].replace('T', ' ')
             one.pop('id')
             one.pop('only_title')
             obj['tiezi_data'] = one
@@ -584,12 +606,13 @@ def show_mygood(request):
 #我的发帖
 def show_mytiezi(request):
     userid = request.GET.get('userid')
-    tiezis = News.objects.filter(userid = userid)
+    tiezis = News.objects.filter(userid = userid,isdelete = 0).order_by('-id')
     list_data = []
     for news in tiezis:
         obj = {}
         one = to_dict(news)
         one['tiezi_id'] = one.pop('id')
+        one['time'] = str(one['time'])[:19].replace('T', ' ')
         one.pop('only_title')
         list_data.append(one)
     data = {'status': 1,
@@ -601,12 +624,13 @@ def show_mytiezi(request):
 ##我的精华帖
 def show_myessence(request):
     userid = request.GET.get('userid')
-    tiezis = News.objects.filter(Q(userid = userid)&Q(good_num__gt=199))
+    tiezis = News.objects.filter(Q(userid = userid)&Q(good_num__gt=199)&Q(isdelete = 0))
     list_data = []
     for news in tiezis:
         obj = {}
         one = to_dict(news)
         one['tiezi_id'] = one.pop('id')
+        one['time'] = str(one['time'])[:19].replace('T', ' ')
         one.pop('only_title')
         list_data.append(one)
     data = {'status': 1,
@@ -716,7 +740,7 @@ def show_mynews(request):
                             'tiezi_id': tiezi_id,'tablename':'Side_comment','main_comment_id':main_comment_id,'type':4}
                 back_your_comment[main_comment_id]= user_obj
             else:
-                user_obj = comment_for_tiezis.get(main_comment_id)
+                user_obj = back_your_comment.get(main_comment_id)
                 if user_obj['ismany'] == 0:
                     user_obj['ismany'] == 1
                 else:
@@ -771,7 +795,7 @@ def read_show_detail(request):
     tiezi_data['img1'] = news.img1
     tiezi_data['img2'] = news.img2
     tiezi_data['img3'] = news.img3
-    tiezi_data['time'] = news.time
+    tiezi_data['time'] = str(news.time)[:19].replace('T',' ')
     tiezi_data['content'] = news.content
 
     # 判断当前用户是否点赞主贴
@@ -840,3 +864,24 @@ def read_show_detail(request):
 
     return  JsonResponse({'status': 1, 'data': obj})
 
+
+def delete_news(request):
+    tiezi_id = int(request.GET.get('tieziid'))
+    news = News.objects.get(id = tiezi_id)
+    news.isdelete = 1
+    news.save()
+    userid = news.userid
+    user = User.objects.get(userid = userid)
+    user.post_num -= 1
+    user.experience -= 10
+    user.save()
+    Good_num_tiezi.objects.filter(tiezi_id = tiezi_id).update(isread=1)
+
+    main_comment = Main_comment.objects.filter(tiezi_id = tiezi_id)
+    if main_comment.exists():
+        for themain in main_comment:
+            themain.main_isread = 1
+            themain.save()
+            Good_num_maincomment.objects.filter(main_comment_id=themain.id).update(isread=1)
+            Side_comment.objects.filter(main_comment_id=themain.id).update(side_isread=1)
+    return JsonResponse({'status':1})

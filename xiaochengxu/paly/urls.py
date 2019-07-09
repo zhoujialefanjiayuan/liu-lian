@@ -9,6 +9,7 @@ urlpatterns = [
     url(r'^getid/$', views.getid),#测试连接开发服务器
     url(r'^getuser/$', views.getuser),
     url(r'^gomine/$', views.go_mine),
+    url(r'^notreadnews/$', views.notreadnews),
     url(r'^getuserdata/$', views.browseuserdata),#浏览用户详情
     url(r'^concern/$', views.concern),
     url(r'^no_concern/$', views.no_concern),

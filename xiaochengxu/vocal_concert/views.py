@@ -43,7 +43,7 @@ def to_dict(obj):
         attr_dict[name] = value
     return attr_dict
 
-@cache_page(60*60,cache='longtime')
+@cache_page(60)
 def show_all(request):
     vocals=Vocal.objects.all()
     list_data = []
@@ -67,7 +67,7 @@ def show_all(request):
         list_data.append(obj)
     return JsonResponse({'status':1,'data':list_data,'singger':list(singgers),'city':list(citys)})
 
-@cache_page(60*60,cache='longtime')
+@cache_page(60)
 def show_swiper(request):
     vocals = Vocal.objects.filter(isswiper = 1)
     list_data = []
@@ -132,7 +132,7 @@ def qiniuyun_uptoken(request):
     return JsonResponse({'status':1,'uptoken':uptoken,'expire':3600,'domain':'xcx.szbeacon.com'})
 
 
-@cache_page(60*60,cache='longtime')
+@cache_page(60)
 def getpicture(request):
     projectid = int(request.GET.get('projectid'))
     pictures = Picture.objects.filter(project_id = projectid)

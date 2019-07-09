@@ -8,7 +8,7 @@ import requests
 from Crypto.Cipher import AES
 from django.db.models import Q
 from django.http import JsonResponse,HttpResponseRedirect
-
+from django.views.decorators.cache import cache_page
 
 from activety.models import Usercoupon
 from news.views import to_dict
@@ -140,7 +140,7 @@ def closeorder(request):
         return JsonResponse({'status': 0, 'code': 'FAIL'})
 
 
-
+@cache_page(60*60,cache='longtime')
 def goods_type(request):
     types = Good_types.objects.all()
     data =[]
@@ -198,6 +198,7 @@ def goods_type(request):
 
 
 #周边商品
+@cache_page(60*60,cache='longtime')
 def showzhoubian(request):
     zhoubians = Zhoubian.objects.all()
     data = []
@@ -212,6 +213,7 @@ def showzhoubian(request):
     return JsonResponse({'status':1,'data':data})
 
 #周边详情
+@cache_page(60*60,cache='longtime')
 def thezhoubian(request):
     id = int(request.GET.get('zhoubianid'))
     zhoubian = Zhoubian.objects.get(id = id)
@@ -448,11 +450,11 @@ def myorder(request):
     userid = request.POST.get('userid')
     type = int(request.POST.get('type'))
     if type == 2:
-        orders = ZhouBianorders.objects.filter(Q(order_user=userid) & Q(type=2))
+        orders = ZhouBianorders.objects.filter(Q(order_user=userid) & Q(type=2)).order_by('-id')
     elif type == 3:
-        orders = ZhouBianorders.objects.filter( (Q(order_user=userid)&Q(type=31))|(Q(order_user=userid)&Q(type=32)) )
+        orders = ZhouBianorders.objects.filter( (Q(order_user=userid)&Q(type=31))|(Q(order_user=userid)&Q(type=32)) ).order_by('-id')
     else:
-        orders = ZhouBianorders.objects.filter( (Q(order_user=userid)&Q(type=41))|(Q(order_user=userid)&Q(type=42))|(Q(order_user=userid)&Q(type=43)) )
+        orders = ZhouBianorders.objects.filter( (Q(order_user=userid)&Q(type=41))|(Q(order_user=userid)&Q(type=42))|(Q(order_user=userid)&Q(type=43)) ).order_by('-id')
     order_data = []
     if orders.exists():
         for order in orders:
@@ -539,6 +541,7 @@ def refuse_return(request):
         return JsonResponse({'status': 0,'code':'该状态不支持拒绝退款'})
 
 #现场服务
+@cache_page(60*60,cache='longtime')
 def newgoods(request):
     goods = Goods.objects.all()
     types = Good_types.objects.all()
@@ -676,7 +679,6 @@ def qureypay_forxianchang(request):
     url = 'https://api.mch.weixin.qq.com/pay/orderquery'
     res = requests.post(url, data=xml_params)
     get_dict = trans_xml_to_dict(res.text)
-    print('get_dict>>>',get_dict)
     if get_dict['result_code'] == 'SUCCESS':
         state = get_dict['trade_state']
         if state == 'SUCCESS':
@@ -689,7 +691,7 @@ def qureypay_forxianchang(request):
 
 def showorder_forxianchang(request):
     userid = request.POST.get('userid')
-    orders = Xianchangorder.objects.filter(order_userid=userid)
+    orders = Xianchangorder.objects.filter(order_userid=userid).order_by('-id')
     wait = []
     get = []
     if orders.exists:

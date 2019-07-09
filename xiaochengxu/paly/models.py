@@ -20,7 +20,7 @@ class User(models.Model):
     unionId = models.CharField(max_length=30)
     token = models.CharField(max_length=100,default='nothing',unique=True)
     experience = models.IntegerField(default=0)
-    post_num = models.IntegerField(default=0)
+    post_num = models.IntegerField(default=0) #发帖数
     concern_num = models.IntegerField(default=0)
     fans_num = models.IntegerField(default=0)
 

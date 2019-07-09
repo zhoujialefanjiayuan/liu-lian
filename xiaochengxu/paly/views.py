@@ -147,12 +147,6 @@ def go_mine(request):
     post_num = user.post_num
     concern_num = user.concern_num
     fans_num = user.fans_num
-    notread = Main_comment.objects.filter(
-        Q(to_man=userid) & Q(main_isread=0)).count() | Good_num_tiezi.objects.filter(
-        Q(get_good_man=userid) & Q(isread=0)).count() | Good_num_maincomment.objects.filter(
-        Q(get_good_man=userid) & Q(isread=0)).count() | Side_comment.objects.filter(
-        Q(to_man=userid) & Q(side_isread=0)).count()
-
     send_data = {
         "status": 1,
         "user_data": {
@@ -166,10 +160,20 @@ def go_mine(request):
             'post_num': post_num,
             'concern_num': concern_num,
             'fans_num': fans_num,
-            'notread':notread
         }
     }
     return JsonResponse(send_data)
+
+def notreadnews(request):
+    userid = request.POST.get('userid')
+    notread = Main_comment.objects.filter(
+        Q(to_man=userid) & Q(main_isread=0)).count() | Good_num_tiezi.objects.filter(
+        Q(get_good_man=userid) & Q(isread=0)).count()| Side_comment.objects.filter(
+        Q(to_man=userid) & Q(side_isread=0)).count() | Good_num_maincomment.objects.filter(
+        Q(get_good_man=userid) & Q(isread=0)).count()
+    if notread != 0:
+        notread = 1
+    return JsonResponse({'status':notread})
 
 #浏览用户详情
 def browseuserdata(request):
@@ -190,15 +194,15 @@ def browseuserdata(request):
     isfocoused = Concern.objects.filter(Q(userid = theuserid) & Q(concern_userid = togetuserid))
     focoused = 1 if isfocoused.exists() else 0
 
-    tiezis = News.objects.filter(userid=togetuserid).order_by('good_num')[0:5]
+    tiezis = News.objects.filter(userid=togetuserid,isdelete = 0).order_by('good_num')[0:5]
     if tiezis.exists():
         tiezis_data = []
         for tiezi in tiezis:
             obj = {}
             obj['title'] = tiezi.title
             obj['id'] = tiezi.id
-            obj['content'] = tiezi.content[:30]
-            obj['time'] = tiezi.time
+            obj['content'] = tiezi.content
+            obj['time'] = str(tiezi.time)[:19].replace('T',' ')
             obj['img1'] = tiezi.img1
             obj['top'] = tiezi.top
             obj['comment_num'] = tiezi.comment_num

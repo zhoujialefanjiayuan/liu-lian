@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     url(r'^write_news/$', views.write_news),  # 写帖子
+    url(r'^delete_news/$', views.delete_news),  # 写帖子
     url(r'^show_indexnews/$', views.indexshow_news),  # 首页展示帖子
     url(r'^topnews/$', views.topnews),  # 榜单帖子
     url(r'^focouse_news/$', views.focousenews),  # 关注帖子

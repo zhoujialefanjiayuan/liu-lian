@@ -5,7 +5,7 @@ from django.db import models
 class News(models.Model):
     userid = models.CharField(max_length=50)
     title = models.CharField(max_length=50)
-    only_title = models.CharField(max_length=100, unique=True,default=0)
+    only_title = models.CharField(max_length=100,default=0,db_index=True)
     content = models.TextField(max_length=1024)
     time = models.DateTimeField(auto_now_add=True)
     img1 =  models.CharField(max_length=200,default='nopicture')
@@ -15,6 +15,7 @@ class News(models.Model):
     comment_num = models.IntegerField(default=0)
     good_num = models.IntegerField(default=0)
     isswiper = models.BooleanField(default=0)
+    isdelete = models.BooleanField(default=0)
 
 
 #主评论表

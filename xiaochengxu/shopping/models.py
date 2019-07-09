@@ -124,7 +124,6 @@ class Xianchangorder(models.Model):
     isget = models.BooleanField(default=0,verbose_name='是否送达')
     class Meta:
         verbose_name_plural = '现场服务配送系统'
-
     #是否送达
     def issended(self):
         """自定义一个a标签，跳转到实现复制数据功能的url"""

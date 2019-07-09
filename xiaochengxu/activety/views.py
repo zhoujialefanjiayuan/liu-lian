@@ -16,7 +16,7 @@ from django.http import JsonResponse
 
 
 #所有的活动
-# @cache_page(60*3,cache='longtime')
+@cache_page(60*5,cache='longtime')
 def allactivety(request):
     activeties = Activety.objects.all().order_by('endtime')
     data_list = []
