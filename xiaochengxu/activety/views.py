@@ -26,7 +26,7 @@ def allactivety(request):
         obj['id']=i.id
         obj['name']=i.name
         obj['support']=i.support
-        obj['endtime']=i.endtime
+        obj['endtime']=str(i.endtime)[:19].replace('T',' ')
         obj['joinnum']=i.joinnum
         obj['isvote'] =i.isvote
         if i.isvote:
@@ -37,6 +37,7 @@ def allactivety(request):
 
 def theactivety(request):
     userid = request.POST.get('userid')
+    print('>>>>>userid',userid)
     activetyid = int(request.POST.get('activetyid'))
     #是否已经关注
     if userid is not None:
@@ -71,7 +72,7 @@ def theactivety(request):
     thedata['id'] = activety.id
     thedata['name'] = activety.name
     thedata['support'] = activety.support
-    thedata['endtime'] = endtime
+    thedata['endtime'] = str(endtime)[:19].replace('T',' ')
     thedata['joinnum'] = activety_joinnum
     thedata['explain'] = activety.explain
     thedata['isvote'] = activety.isvote
@@ -115,20 +116,19 @@ def join(request):
     chooseid = request.POST.get('chooseid')
     user = User.objects.get(userid = userid)
     theactivety = Activety.objects.get(id = activety)
-    if theactivety.isvote:
-        if chooseid is None:
-            return JsonResponse({'status': 0,'code':'未上传投票参数'})
-        voto = Vote.objects.get(id=int(chooseid))
-        voto.num += 1
-        voto.save()
-    theactivety.joinnum += 1
-    theactivety.save()
-    join = Join()
-    join.activety = theactivety
-    join.userid = user.userid
-    join.username = user.nickName
-    join.save()
-    return JsonResponse({'status':1})
+    join,err = Join.objects.get_or_create(activety = theactivety,userid = user.userid,username = user.nickName)
+    if err:
+        if theactivety.isvote:
+            if chooseid is None:
+                return JsonResponse({'status': 0,'code':'未上传投票参数'})
+            voto = Vote.objects.get(id=int(chooseid))
+            voto.num += 1
+            voto.save()
+        theactivety.joinnum += 1
+        theactivety.save()
+        return JsonResponse({'status':1})
+    else:
+        return JsonResponse({'status': 1,'code':'he was voted'})
 
 
 #我参加的活动
@@ -144,7 +144,7 @@ def myjoin(request):
             obj['id'] = activety.id
             obj['name'] = activety.name
             obj['support'] = activety.support
-            obj['endtime'] = activety.endtime
+            obj['endtime'] = str(activety.endtime)[:19].replace('T',' ')
             obj['joinnum'] = activety.joinnum
             data_list.append(obj)
     return JsonResponse({'status': 1, 'data': data_list})

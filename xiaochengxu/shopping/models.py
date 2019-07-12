@@ -122,6 +122,7 @@ class Xianchangorder(models.Model):
     order_true_pay = models.DecimalField(decimal_places=2, max_digits=7,verbose_name='付款金额')  # 实付
     orderimg = models.CharField(max_length=150,default='http://liulian.szbeacon.com/%E8%BD%AE%E6%92%AD%E7%94%BB%E9%9D%A2_0002_%E7%BB%84-2-%E6%8B%B7%E8%B4%9D.png')
     isget = models.BooleanField(default=0,verbose_name='是否送达')
+    ispay = models.BooleanField(default=0,verbose_name='是否支付')
     class Meta:
         verbose_name_plural = '现场服务配送系统'
     #是否送达

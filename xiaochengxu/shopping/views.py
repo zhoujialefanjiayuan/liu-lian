@@ -603,18 +603,9 @@ def post_xianchangorder(request):
         ip = x_forwarded_for.split(',')[0]  # 所以这里是真实的ip(若经过负载均衡，和代理有此项)
     else:
         ip = request.META.get('REMOTE_ADDR')  # 这里获得代理ip
-    # description: ""
-    # good_id: 3
-    # good_name: "鸡腿"
-    # goods_price: 6
-    # num: 2
-    # picture: "https://img.alicdn.com/bao/uploaded/i1/1657487457/O1CN01cTRDcD24xLxq74kG4_!!0-item_pic.jpg"
-    # store_num: 1000
-    # type: #2
     order = Xianchangorder()
     now = datetime.datetime.now()
     ordernum = randnum()
-    print('ordernum>>>',ordernum)
     order.order_num = ordernum
     order.order_start_time = str(now)[:-7]
     order.order_userid = order_userid
@@ -647,10 +638,8 @@ def post_xianchangorder(request):
     spbill_create_ip = ip  # 终端ip
     notify_url = 'https://www.jianshu.com/u/44cde87b5c30'  # 支付后的通知回调url
     data_params = get_params(body, out_trade_no, total_fee, spbill_create_ip,order_userid[:-3],notify_url)
-    print('data_params>>>',data_params)
     xml_params = get_xml_params(data_params, key)
     response_dict = pay_wx(xml_params)
-    print("response_dict>>>",response_dict)
     timestamp = str(int(time.time()))
     send_data = {}
     send_data['timeStamp']= timestamp
@@ -682,6 +671,9 @@ def qureypay_forxianchang(request):
     if get_dict['result_code'] == 'SUCCESS':
         state = get_dict['trade_state']
         if state == 'SUCCESS':
+            theorder = Xianchangorder.objects.get(order_num = order_num)
+            theorder.ispay = 1
+            theorder.save()
             return JsonResponse({'status': 1, 'code': 'SUCCESS'})
         else:
             return JsonResponse({'status': 0, 'code': 'FAIL'})
@@ -691,7 +683,7 @@ def qureypay_forxianchang(request):
 
 def showorder_forxianchang(request):
     userid = request.POST.get('userid')
-    orders = Xianchangorder.objects.filter(order_userid=userid).order_by('-id')
+    orders = Xianchangorder.objects.filter(order_userid=userid,ispay=1).order_by('-id')
     wait = []
     get = []
     if orders.exists:

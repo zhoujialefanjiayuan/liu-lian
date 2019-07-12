@@ -109,11 +109,6 @@ def getuser(request):
         concern_num = user.concern_num
         fans_num = user.fans_num
         experience = user.experience
-        notread = Main_comment.objects.filter(
-            Q(to_man=userid) & Q(main_isread=0)).count() | Good_num_tiezi.objects.filter(
-            Q(get_good_man=userid) & Q(isread=0)).count() | Good_num_maincomment.objects.filter(
-            Q(get_good_man=userid) & Q(isread=0)).count() | Side_comment.objects.filter(
-            Q(to_man=userid) & Q(side_isread=0)).count()
 
         send_data={
             "status":1,
@@ -124,7 +119,6 @@ def getuser(request):
                 "gender":gender,
                 "language":language,
                 "avatarUrl":avatarUrl,
-                "not_read":notread,
                 'experience':experience,
                 'post_num':post_num,
                 'concern_num':concern_num,
@@ -168,9 +162,9 @@ def notreadnews(request):
     userid = request.POST.get('userid')
     notread = Main_comment.objects.filter(
         Q(to_man=userid) & Q(main_isread=0)).count() | Good_num_tiezi.objects.filter(
-        Q(get_good_man=userid) & Q(isread=0)).count()| Side_comment.objects.filter(
+        Q(get_good_man=userid) & Q(isread=0)&Q(isdelete =0)).count()| Side_comment.objects.filter(
         Q(to_man=userid) & Q(side_isread=0)).count() | Good_num_maincomment.objects.filter(
-        Q(get_good_man=userid) & Q(isread=0)).count()
+        Q(get_good_man=userid)&Q(isread=0)&Q(isdelete =0)).count()
     if notread != 0:
         notread = 1
     return JsonResponse({'status':notread})

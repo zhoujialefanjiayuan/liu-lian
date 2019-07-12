@@ -1,7 +1,10 @@
+import datetime
+
 from django.db import models
 
 # Create your models here.
 #发布帖子
+t = datetime.datetime.strptime('2019-06-28','%Y-%m-%d')
 class News(models.Model):
     userid = models.CharField(max_length=50)
     title = models.CharField(max_length=50)
@@ -26,8 +29,8 @@ class Main_comment(models.Model):
     good_num = models.IntegerField(default=0)
     to_man =  models.CharField(max_length=50) #发表帖子的人openId
     main_isread = models.BooleanField(default=0)
-
-
+    opentime = models.DateTimeField(auto_now_add=True)
+    updatetime = models.DateTimeField(auto_now_add=True)
 #副评论表
 class Side_comment(models.Model):
     main_comment_id = models.IntegerField()
@@ -35,8 +38,9 @@ class Side_comment(models.Model):
     side_com_content =  models.CharField(max_length=200)
     tiezi_id = models.IntegerField(default=0)
     to_man = models.CharField(max_length=50)  # 发表主评论的人openId
-
     side_isread = models.BooleanField(default=0)
+    opentime = models.DateTimeField(auto_now_add=True)
+
 
 
 
@@ -49,6 +53,7 @@ class Good_num_tiezi(models.Model):
     #帖子id
     tiezi_id = models.IntegerField()
     isread = models.BooleanField(default=0)
+    isdelete = models.BooleanField(default=0)
 
 
 #点赞主评论表
@@ -60,7 +65,7 @@ class Good_num_maincomment(models.Model):
     #主评论表id
     main_comment_id = models.IntegerField()
     isread = models.BooleanField(default=0)
-
+    isdelete = models.BooleanField(default=0)
 
 #收藏帖子
 class Collect_tiezi(models.Model):

@@ -301,9 +301,14 @@ def side_comment(request):
         # 帖子评论数加1
         tiezi = News.objects.get(id=tiezi_id)
         tiezi.comment_num += 1
-
-
         tiezi.save()
+        #更新主评论时间
+        maincomment = Main_comment.objects.get(pk=main_comment_id)
+        print(comment[0].opentime > maincomment.updatetime)
+        if comment[0].opentime > maincomment.updatetime:
+
+            maincomment.updatetime= comment[0].opentime
+            maincomment.save()
         return JsonResponse({'status': 1, 'code': '副评论成功'})
 
 
@@ -328,7 +333,7 @@ def show_detail(request):
     tiezi_data['content'] = news.content
 
     # 判断当前用户是否点赞主贴
-    isgood_forTiezi = Good_num_tiezi.objects.filter(Q(tiezi_id=tiezi_id) & Q(make_good_man=userid))
+    isgood_forTiezi = Good_num_tiezi.objects.filter(Q(tiezi_id=tiezi_id) & Q(make_good_man=userid)& Q(isdelete=0))
     if isgood_forTiezi.exists():
         tiezi_data['isgood_forTiezi'] = 1
     else:
@@ -341,35 +346,39 @@ def show_detail(request):
     else:
         tiezi_data['iscollect_forTiezi'] = 0
 
-
     writor = User.objects.get(openId=user[:-3])
     tiezi_data['writor_nikename'] = writor.nickName
     tiezi_data['writor_avatarUrl'] = writor.avatarUrl
+    obj['tiezi_data'] = tiezi_data
+    return  JsonResponse({'status': 1, 'data': obj})
 
 
-    maincomments = Main_comment.objects.filter(tiezi_id=tiezi_id).order_by('-good_num','-id')
+def onepage(request):
+    page = int(request.GET.get('page'))
+    tiezi_id = int(request.GET.get('tiezi_id'))
+    userid = request.GET.get('userid')
+    maincomments = Main_comment.objects.filter(tiezi_id=tiezi_id).order_by('-updatetime')
     main_list = []
-    for maincomment in maincomments:
+    for maincomment in maincomments[(page-1)*25:page*25]:
         main_data = {}
         mian_id = maincomment.id
-        main_data['id'] =mian_id
+        main_data['id'] = mian_id
         main_data['com_content'] = maincomment.com_content
         main_data['good_num'] = maincomment.good_num
         main_data['tiezi_id'] = maincomment.tiezi_id
-
-        main_user=maincomment.main_openor
+        main_data['opentime'] = str(maincomment.opentime)[:19].replace('T',' ')
+        main_user = maincomment.main_openor
         main_data['main_openor'] = main_user
         Mainuser = User.objects.get(openId=main_user[:-3])
-        main_data['from_main_nickname']= Mainuser.nickName
+        main_data['from_main_nickname'] = Mainuser.nickName
         main_data['from_main_avatarurl'] = Mainuser.avatarUrl
 
-        isgood = Good_num_maincomment.objects.filter(Q(main_comment_id=mian_id) & Q(make_good_man=userid))
+        isgood = Good_num_maincomment.objects.filter(
+            Q(main_comment_id=mian_id) & Q(make_good_man=userid) & Q(isdelete=0))
         if isgood.exists():
             main_data['isgood_forcomment'] = 1
         else:
             main_data['isgood_forcomment'] = 0
-
-
 
         sidecomments = Side_comment.objects.filter(main_comment_id=mian_id).order_by('-id')
         side_list = []
@@ -384,20 +393,64 @@ def show_detail(request):
             side_data['side_openor'] = sideopenor
             Sideopenor = User.objects.get(openId=sideopenor[:-3])
             side_data['from_side_nickname'] = Sideopenor.nickName
-            sidecommentz_to_man =sidecomment.to_man
+            sidecommentz_to_man = sidecomment.to_man
             side_data['sidecomment_to_man'] = sidecommentz_to_man
             Sidecommentz_to_man = User.objects.get(openId=sidecommentz_to_man[:-3])
             side_data['to_side_nickname'] = Sidecommentz_to_man.nickName
 
             side_list.append(side_data)
 
-        main_data['sidecomments']=side_list
+        main_data['sidecomments'] = side_list
         main_list.append(main_data)
+    return JsonResponse({'status':1,'data':main_list})
 
-    tiezi_data['maincomments']= main_list
-    obj['tiezi_data'] = tiezi_data
-    return  JsonResponse({'status': 1, 'data': obj})
 
+def topcomments(request):
+    tiezi_id = int(request.GET.get('tiezi_id'))
+    userid = request.GET.get('userid')
+    topcomments = Main_comment.objects.filter(Q(tiezi_id=tiezi_id) & Q(good_num__gte=100))
+    top_list = []
+    for maincomment in topcomments[:20]:
+        main_data = {}
+        mian_id = maincomment.id
+        main_data['id'] = mian_id
+        main_data['com_content'] = maincomment.com_content
+        main_data['good_num'] = maincomment.good_num
+        main_data['tiezi_id'] = maincomment.tiezi_id
+        main_data['opentime'] = str(maincomment.opentime)[:19].replace('T',' ')
+        main_user = maincomment.main_openor
+        main_data['main_openor'] = main_user
+        Mainuser = User.objects.get(openId=main_user[:-3])
+        main_data['from_main_nickname'] = Mainuser.nickName
+        main_data['from_main_avatarurl'] = Mainuser.avatarUrl
+
+        isgood = Good_num_maincomment.objects.filter(
+            Q(main_comment_id=mian_id) & Q(make_good_man=userid) & Q(isdelete=0))
+        if isgood.exists():
+            main_data['isgood_forcomment'] = 1
+        else:
+            main_data['isgood_forcomment'] = 0
+        sidecomments = Side_comment.objects.filter(main_comment_id=mian_id).order_by('-id')
+        side_list = []
+        for sidecomment in sidecomments:
+            side_data = {}
+            side_data['main_comment_id'] = sidecomment.main_comment_id
+            side_data['id'] = sidecomment.id
+            side_data['tiezi_id'] = sidecomment.tiezi_id
+            side_data['side_com_content'] = sidecomment.side_com_content
+
+            sideopenor = sidecomment.side_openor
+            side_data['side_openor'] = sideopenor
+            Sideopenor = User.objects.get(openId=sideopenor[:-3])
+            side_data['from_side_nickname'] = Sideopenor.nickName
+            sidecommentz_to_man = sidecomment.to_man
+            side_data['sidecomment_to_man'] = sidecommentz_to_man
+            Sidecommentz_to_man = User.objects.get(openId=sidecommentz_to_man[:-3])
+            side_data['to_side_nickname'] = Sidecommentz_to_man.nickName
+            side_list.append(side_data)
+        main_data['sidecomments'] = side_list
+        top_list.append(main_data)
+    return JsonResponse({'status': 1, 'data': top_list})
 
 #帖子点赞
 def good_fortiezi(request):
@@ -408,16 +461,35 @@ def good_fortiezi(request):
     #点赞自己显示已读
     if make_good_man == get_good_man:
         good_num_tiezi = Good_num_tiezi.objects.get_or_create(tiezi_id=tiezi_id,make_good_man=make_good_man,get_good_man=get_good_man,isread=1)
-    else:
-        good_num_tiezi = Good_num_tiezi.objects.get_or_create(tiezi_id=tiezi_id,make_good_man=make_good_man,get_good_man=get_good_man)
-    if False in good_num_tiezi:
-        return  JsonResponse({'status':0,'code':'已点赞'})
-    else:
-        new = news.good_num +1
-        news.good_num = new
-        news.save()
-        return JsonResponse({'status': 1, 'code': '点赞成功','data':{'tiezi_id':tiezi_id,'new_good_num':new}})
 
+    else:
+        good_num_tiezi= Good_num_tiezi.objects.get_or_create(tiezi_id=tiezi_id,make_good_man=make_good_man,get_good_man=get_good_man)
+    if good_num_tiezi[1] == True:
+        news.good_num += 1
+        news.save()
+    else:
+        if good_num_tiezi[0].isdelete == 1:
+            news.good_num += 1
+            news.save()
+    if good_num_tiezi[0].isdelete == 1:
+        good_num_tiezi[0].isdelete = 0
+        good_num_tiezi[0].save()
+    return JsonResponse({'status': 1, 'code': '点赞成功','data':{'tiezi_id':tiezi_id}})
+
+#取消点赞帖子
+def delgood_fortiezi(request):
+    tiezi_id = int(request.POST.get('tiezi_id'))
+    userid= request.POST.get('make_good_man')
+    goodfornews = Good_num_tiezi.objects.filter(make_good_man=userid,tiezi_id=tiezi_id)[0]
+    if  goodfornews.isdelete == 0:
+        goodfornews.isdelete = 1
+        goodfornews.save()
+        news = News.objects.get(pk=tiezi_id)
+        news.good_num -= 1
+        news.save()
+        return JsonResponse({'status': 1})
+    else:
+        return JsonResponse({'status': 0})
 
 #点赞主评论
 def good_formiancomment(request):
@@ -432,16 +504,33 @@ def good_formiancomment(request):
                                                                           get_good_man=get_good_man,isread =1)
     else:
         good_num_maincomment = Good_num_maincomment.objects.get_or_create(main_comment_id=maincomment_id, make_good_man=make_good_man,
-                                                          get_good_man=get_good_man)
-    if False in good_num_maincomment:
-        return JsonResponse({'status': 0, 'code': '已点赞'})
-    else:
-        new = maincomment.good_num + 1
-        maincomment.good_num = new
+                                                 get_good_man=get_good_man)
+    if good_num_maincomment[1] == True:
+        maincomment.good_num +=1
         maincomment.save()
-        return JsonResponse({'status': 1, 'code': '点赞成功', 'data': {'maincomment_id': maincomment_id, 'new_good_num': new}})
+    else:
+        if good_num_maincomment[0].isdelete == 1:
+            maincomment.good_num += 1
+            maincomment.save()
+    if good_num_maincomment[0].isdelete == 1:
+        good_num_maincomment[0].isdelete = 0
+        good_num_maincomment[0].save()
+    return JsonResponse({'status': 1, 'code': '点赞成功', 'data': {'maincomment_id': maincomment_id}})
 
-
+#取消点赞主评论
+def delgood_formiancomment(request):
+    maincomment_id = int(request.POST.get('maincomment_id'))
+    make_good_man = request.POST.get('make_good_man')
+    goodformaincomment = Good_num_maincomment.objects.filter(main_comment_id = maincomment_id,make_good_man =make_good_man)[0]
+    if goodformaincomment.isdelete == 0:
+        goodformaincomment.isdelete = 1
+        goodformaincomment.save()
+        maincomment = Main_comment.objects.get(pk=maincomment_id)
+        maincomment.good_num -= 1
+        maincomment.save()
+        return JsonResponse({'status': 1})
+    else:
+        return JsonResponse({'status': 0})
 
 #收藏帖子
 def collect(request):
@@ -563,7 +652,7 @@ def show_mycomment(request):
 #我的点赞,只展示点赞的帖子
 def show_mygood(request):
     userid = request.GET.get('userid')
-    goods = Good_num_tiezi.objects.filter(make_good_man=userid)
+    goods = Good_num_tiezi.objects.filter(make_good_man=userid,isdelete=0)
     list_data = []
     if goods.exists():
         for good in goods:
@@ -646,7 +735,7 @@ def show_mynews(request):
     news_list = []
 
     #点赞了你的帖子
-    good_fortiezis = Good_num_tiezi.objects.filter(Q(get_good_man=userid) & Q(isread=0)).exclude(make_good_man =userid)
+    good_fortiezis = Good_num_tiezi.objects.filter(Q(get_good_man=userid) & Q(isread=0)&Q(isdelete=0)).exclude(make_good_man =userid)
 
     good_for_tiezis = {}
     if good_fortiezis.exists():
@@ -654,47 +743,47 @@ def show_mynews(request):
             tiezi_id = good_fortiezi.tiezi_id
 
 
-            if tiezi_id not in good_for_tiezis:
-                make_good_man = good_fortiezi.make_good_man
-                user = User.objects.get(userid=make_good_man)
-                username = user.nickName
-                avatarUrl= user.avatarUrl
-                user_obj = {'username':username,'avatarUrl':avatarUrl,'ismany':0,
-                            'tiezi_id':tiezi_id,'tablename':'Good_num_tiezi','main_comment_id':'','type':1}
-                good_for_tiezis[tiezi_id] = user_obj
-            else:
-                user_obj = good_for_tiezis.get(tiezi_id)
-                if user_obj['ismany'] == 0:
-                    user_obj['ismany'] == 1
-                else:
-                    continue
+            # if tiezi_id not in good_for_tiezis:
+            make_good_man = good_fortiezi.make_good_man
+            user = User.objects.get(userid=make_good_man)
+            username = user.nickName
+            avatarUrl= user.avatarUrl
+            user_obj = {'username':username,'avatarUrl':avatarUrl,
+                        'tiezi_id':tiezi_id,'tablename':'Good_num_tiezi','main_comment_id':'','type':1}
+            good_for_tiezis[tiezi_id] = user_obj
+            # else:
+            #     user_obj = good_for_tiezis.get(tiezi_id)
+            #     if user_obj['ismany'] == 0:
+            #         user_obj['ismany'] == 1
+            #     else:
+            #         continue
     for k in good_for_tiezis:
         news_list.append(good_for_tiezis[k])
 
 
 
     # 点赞了你的评论
-    good_formiancomments = Good_num_maincomment.objects.filter(Q(get_good_man=userid) & Q(isread=0)).exclude(make_good_man =userid)
+    good_formiancomments = Good_num_maincomment.objects.filter(Q(get_good_man=userid) & Q(isread=0)&Q(isdelete=0)).exclude(make_good_man =userid)
     good_for_comments = {}
     if good_formiancomments.exists():
         for good_formiancomment in good_formiancomments:
             main_comment_id = good_formiancomment.main_comment_id
-            if main_comment_id not in good_for_comments:
-                make_good_man = good_formiancomment.make_good_man
-                user = User.objects.get(userid=make_good_man)
-                username = user.nickName
-                avatarUrl = user.avatarUrl
+            #if main_comment_id not in good_for_comments:
+            make_good_man = good_formiancomment.make_good_man
+            user = User.objects.get(userid=make_good_man)
+            username = user.nickName
+            avatarUrl = user.avatarUrl
 
-                tiezi_id = Main_comment.objects.get(pk = main_comment_id).tiezi_id
-                user_obj = {'username': username, 'avatarUrl': avatarUrl, 'ismany': 0,'tiezi_id':tiezi_id,
-                            'tablename':'Good_num_maincomment','main_comment_id':main_comment_id,'type':2}
-                good_for_comments[main_comment_id] = user_obj
-            else:
-                user_obj = good_for_comments.get(main_comment_id)
-                if user_obj['ismany'] == 0:
-                    user_obj['ismany'] == 1
-                else:
-                    continue
+            tiezi_id = Main_comment.objects.get(pk = main_comment_id).tiezi_id
+            user_obj = {'username': username, 'avatarUrl': avatarUrl, 'ismany': 0,'tiezi_id':tiezi_id,
+                        'tablename':'Good_num_maincomment','main_comment_id':main_comment_id,'type':2}
+            good_for_comments[main_comment_id] = user_obj
+            # else:
+            #     user_obj = good_for_comments.get(main_comment_id)
+            #     if user_obj['ismany'] == 0:
+            #         user_obj['ismany'] == 1
+            #     else:
+            #         continue
     for k in good_for_comments:
         news_list.append(good_for_comments[k])
 
@@ -704,21 +793,21 @@ def show_mynews(request):
     if main_comments.exists():
         for main_comment in main_comments:
             tiezi_id = main_comment.tiezi_id
-            if tiezi_id not in comment_for_tiezis:
-                make_comment_man  = main_comment.main_openor
-                user = User.objects.get(userid=make_comment_man)
-                username = user.nickName
-                avatarUrl = user.avatarUrl
-                content = main_comment.com_content
-                user_obj = {'username': username, 'avatarUrl': avatarUrl, 'ismany': 0,'content':content,
-                            'tiezi_id':tiezi_id,'tablename':'Main_comment','main_comment_id':'','type':3,}
-                comment_for_tiezis[tiezi_id] = user_obj
-            else:
-                user_obj = comment_for_tiezis.get(tiezi_id)
-                if user_obj['ismany'] == 0:
-                    user_obj['ismany'] == 1
-                else:
-                    continue
+            #if tiezi_id not in comment_for_tiezis:
+            make_comment_man  = main_comment.main_openor
+            user = User.objects.get(userid=make_comment_man)
+            username = user.nickName
+            avatarUrl = user.avatarUrl
+            content = main_comment.com_content
+            user_obj = {'username': username, 'avatarUrl': avatarUrl, 'ismany': 0,'content':content,
+                        'tiezi_id':tiezi_id,'tablename':'Main_comment','main_comment_id':'','type':3,}
+            comment_for_tiezis[tiezi_id] = user_obj
+            # else:
+            #     user_obj = comment_for_tiezis.get(tiezi_id)
+            #     if user_obj['ismany'] == 0:
+            #         user_obj['ismany'] == 1
+            #     else:
+            #         continue
     for k in comment_for_tiezis:
         news_list.append(comment_for_tiezis[k])
 
@@ -728,23 +817,23 @@ def show_mynews(request):
     if side_comments.exists():
         for side_comment in side_comments:
             main_comment_id = side_comment.main_comment_id
-            if main_comment_id not in back_your_comment:
+            #if main_comment_id not in back_your_comment:
 
-                make_comment_man = side_comment.side_openor
-                user = User.objects.get(userid=make_comment_man)
-                username = user.nickName
-                avatarUrl = user.avatarUrl
-                content = side_comment.side_com_content
-                tiezi_id = side_comment.tiezi_id
-                user_obj = {'username': username, 'avatarUrl': avatarUrl, 'ismany': 0, 'content': content,
-                            'tiezi_id': tiezi_id,'tablename':'Side_comment','main_comment_id':main_comment_id,'type':4}
-                back_your_comment[main_comment_id]= user_obj
-            else:
-                user_obj = back_your_comment.get(main_comment_id)
-                if user_obj['ismany'] == 0:
-                    user_obj['ismany'] == 1
-                else:
-                    continue
+            make_comment_man = side_comment.side_openor
+            user = User.objects.get(userid=make_comment_man)
+            username = user.nickName
+            avatarUrl = user.avatarUrl
+            content = side_comment.side_com_content
+            tiezi_id = side_comment.tiezi_id
+            user_obj = {'username': username, 'avatarUrl': avatarUrl, 'ismany': 0, 'content': content,
+                        'tiezi_id': tiezi_id,'tablename':'Side_comment','main_comment_id':main_comment_id,'type':4}
+            back_your_comment[main_comment_id]= user_obj
+            # else:
+            #     user_obj = back_your_comment.get(main_comment_id)
+            #     if user_obj['ismany'] == 0:
+            #         user_obj['ismany'] == 1
+            #     else:
+            #         continue
     for k in back_your_comment:
         news_list.append(back_your_comment[k])
 

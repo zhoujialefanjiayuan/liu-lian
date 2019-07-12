@@ -11,7 +11,7 @@ class Activety(models.Model):
     name = models.CharField(max_length=255,verbose_name='活动名')
     support = models.CharField(max_length=255,verbose_name='支持商')
     explain = models.CharField(max_length=1024,verbose_name='活动说明')
-    endtime = models.DateField(auto_now_add=True,verbose_name='活动截止时间')
+    endtime = models.DateTimeField(auto_now_add=True,verbose_name='活动截止时间')
     joinnum = models.IntegerField(default=0,verbose_name='参与人数')
     isvote = models.BooleanField(default=0,verbose_name='是否有投票')
     getprize_userid = models.CharField(max_length=255,default=None,verbose_name='获奖人id')

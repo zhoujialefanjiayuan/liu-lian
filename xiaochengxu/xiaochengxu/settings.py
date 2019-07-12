@@ -52,7 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'middleware.fanpa.CountipMiddle'
+    #'middleware.fanpa.CountipMiddle'
 ]
 
 ROOT_URLCONF = 'xiaochengxu.urls'
@@ -88,7 +88,7 @@ DATABASES = {
         # 主机
         'HOST': '119.23.56.197',
         'POST': '3306',
-        'NAME':'shequ',
+        'NAME':'xiaochengxu',
     }
         # 端口号
 }
