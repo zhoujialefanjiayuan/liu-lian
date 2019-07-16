@@ -556,7 +556,16 @@ def delcollect(request):
 
 #举报接口
 def report(request):
-    return  JsonResponse({'status': 1, 'code': '举报成功'})
+    id = request.POST.get('id')
+    content = request.POST.get('content')
+    try:
+        re = Report()
+        re.tiezi_id = int(id)
+        re.content = content
+        re.save()
+        return  JsonResponse({'status': 1, 'code': '举报成功,后台人员正在受理'})
+    except Exception as e:
+        return JsonResponse({'status': 0, 'code': str(e)})
 
 
 #我的收藏

@@ -378,7 +378,7 @@ def refundment(request):
     order = ZhouBianorders.objects.get(order_num=order_num)
     if order.type == 41:
         order_true_pay = int(order.order_true_pay*100)
-        notify_url = 'http://101.132.47.14:8000/shop/get_wxnotice_refund/'
+        notify_url = 'http://101.132.47.14/shop/get_wxnotice_refund/'
         url = 'https://api.mch.weixin.qq.com/secapi/pay/refund'
         params = {
             'appid': appid,

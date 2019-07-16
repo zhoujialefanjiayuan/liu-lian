@@ -71,3 +71,9 @@ class Good_num_maincomment(models.Model):
 class Collect_tiezi(models.Model):
     collector = models.CharField(max_length=50)
     tiezi_id= models.CharField(max_length=10)
+
+
+#记录举报内容
+class Report(models.Model):
+    tiezi_id = models.IntegerField()
+    content = models.CharField(max_length=255)

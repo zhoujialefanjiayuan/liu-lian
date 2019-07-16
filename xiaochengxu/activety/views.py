@@ -16,9 +16,9 @@ from django.http import JsonResponse
 
 
 #所有的活动
-@cache_page(60*5,cache='longtime')
+#@cache_page(60*5,cache='longtime')
 def allactivety(request):
-    activeties = Activety.objects.all().order_by('endtime')
+    activeties = Activety.objects.order_by('-endtime')
     data_list = []
     for i in activeties:
         obj = {}
@@ -29,10 +29,8 @@ def allactivety(request):
         obj['endtime']=str(i.endtime)[:19].replace('T',' ')
         obj['joinnum']=i.joinnum
         obj['isvote'] =i.isvote
-        if i.isvote:
-            data_list.insert(0,obj)
-        else:
-            data_list.append(obj)
+
+        data_list.append(obj)
     return JsonResponse({'status':1,'data':data_list})
 
 def theactivety(request):
