@@ -43,7 +43,7 @@ def to_dict(obj):
         attr_dict[name] = value
     return attr_dict
 
-@cache_page(60)
+@cache_page(3)
 def show_all(request):
     vocals=Vocal.objects.all()
     list_data = []
@@ -67,7 +67,7 @@ def show_all(request):
         list_data.append(obj)
     return JsonResponse({'status':1,'data':list_data,'singger':list(singgers),'city':list(citys)})
 
-@cache_page(60)
+@cache_page(3)
 def show_swiper(request):
     vocals = Vocal.objects.filter(isswiper = 1)
     list_data = []
@@ -132,7 +132,7 @@ def qiniuyun_uptoken(request):
     return JsonResponse({'status':1,'uptoken':uptoken,'expire':3600,'domain':'xcx.szbeacon.com'})
 
 
-@cache_page(60)
+@cache_page(600)
 def getpicture(request):
     projectid = int(request.GET.get('projectid'))
     pictures = Picture.objects.filter(project_id = projectid)
@@ -158,6 +158,22 @@ def addvisit(request):
     picture.save()
     project.save()
     return JsonResponse({'status':1})
+
+def thevoacl(request):
+    projectid = int(request.GET.get('projectid'))
+    vocal = Vocal.objects.get(pk = projectid)
+    obj = {}
+    obj['id'] = vocal.id
+    obj['project_name'] = vocal.project_name
+    obj['little_img'] = vocal.little_img
+    obj['singger'] = vocal.singger
+    obj['city'] = vocal.city
+    obj['location'] = vocal.location
+    obj['time'] = vocal.time
+    obj['picture_num'] = vocal.picture_num
+    obj['visit_num'] = vocal.visit_num
+    return JsonResponse({'status':1,'data':obj})
+
 
 
 

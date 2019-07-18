@@ -35,7 +35,6 @@ def allactivety(request):
 
 def theactivety(request):
     userid = request.POST.get('userid')
-    print('>>>>>userid',userid)
     activetyid = int(request.POST.get('activetyid'))
     #是否已经关注
     if userid is not None:
@@ -201,3 +200,11 @@ def getcoupon(request):
             elif now > end:
                 coupon.delete()
     return JsonResponse({'status': 1, 'data': data})
+
+
+def isjoin(request):
+    userid = request.POST.get('userid')
+    activetyid = int(request.POST.get('activetyid'))
+    isjoin = Join.objects.filter(Q(userid=userid) & Q(activety_id=activetyid))
+    isjoin = True if isjoin.exists() else False
+    return {'status':1,'isjoin':isjoin}

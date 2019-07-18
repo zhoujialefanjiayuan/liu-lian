@@ -59,8 +59,9 @@ class XianchangorderAdmin(admin.ModelAdmin):
 
     def makesuresend(self, request, queryset):
         for obj in queryset.filter():
-            obj.isget = 1
-            obj.save()
+            if obj.order_senderman != '':
+                obj.isget = 1
+                obj.save()
 
     makesuresend.short_description = "商品已送达"
 
