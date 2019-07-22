@@ -16,6 +16,11 @@ class Activety(models.Model):
     isvote = models.BooleanField(default=0,verbose_name='是否有投票')
     getprize_userid = models.CharField(max_length=255,default=None,verbose_name='获奖人id')
     getprize_nickname = models.CharField(max_length=255,default=None,verbose_name='获奖人昵称')
+
+    logurl = models.CharField(max_length=255,default=None,verbose_name='广告图片url')
+    weburl = models.CharField(max_length=255,default=None,verbose_name='跳转网页url')
+    appid = models.CharField(max_length=255,default=None,verbose_name='appid')
+    apppage = models.CharField(max_length=255,default=None,verbose_name='apppage')
     class Meta:
         verbose_name_plural = '活动配置'
 
