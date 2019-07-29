@@ -43,7 +43,12 @@ def getuser(request):
     encryptedData = request.POST.get('encryptedData')
     iv = request.POST.get('iv')
     code = request.POST.get('code')
+    print("encryptedData",encryptedData)
+    print("iv",iv)
+    print("code",code)
+    print('*'*100)
     d = get_unionid(code)
+    print(d)
     errcode = d.get("errcode")
     if errcode:
         errmsg =d.get("errmsg")
@@ -56,6 +61,7 @@ def getuser(request):
         user = User.objects.filter(pk=openId)
         if not user.exists():
             session_key = d["session_key"]
+            print('session_key',session_key)
             user_data = getuserdata(session_key, encryptedData, iv)
         # """
         # 参考数据

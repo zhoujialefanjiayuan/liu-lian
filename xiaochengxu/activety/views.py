@@ -64,6 +64,13 @@ def theactivety(request):
         else:
             getprize_nickname = ''
     thedata = {}
+    adtab = {}
+    adtab['logurl']= activety.logurl
+    adtab['weburl']= activety.weburl
+    adtab['appid'] = activety.appid
+    adtab['apppage']  = activety.apppage
+    adtab['navigatetotype']= 1 if activety.weburl == '' else 0
+    thedata['adtab'] = adtab
     activety_joinnum= activety.joinnum
     thedata['img'] = activety.img
     thedata['id'] = activety.id
