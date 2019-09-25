@@ -41,7 +41,9 @@ INSTALLED_APPS = [
     'news',
     'vocal_concert',
     'shopping',
-    'activety'
+    'activety',
+    'deliverysystem',
+    'shopnew'
 ]
 
 MIDDLEWARE = [
@@ -86,9 +88,9 @@ DATABASES = {
         # 密码
         'PASSWORD': 'w113796',
         # 主机
-        'HOST': '119.23.56.197',
+        'HOST': '101.132.47.14',
         'POST': '3306',
-        'NAME':'xiaochengxu',
+        'NAME':'shequ',
     }
         # 端口号
 }
@@ -116,14 +118,14 @@ AUTH_PASSWORD_VALIDATORS = [
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://:zhou121@119.23.56.197:6379/0",
+        "LOCATION": "redis://localhost:6379/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "longtime": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://:zhou121@119.23.56.197:6379/1",
+        "LOCATION": "redis://localhost:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }

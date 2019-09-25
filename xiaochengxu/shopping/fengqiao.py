@@ -19,9 +19,9 @@ def compose_addorderxml(order_data):
       <Order 
     	orderid="{orderid}"
     	j_company="深圳榴莲科技有限公司" 
-    	j_contact="邓XX" 
-    	j_tel="15323233432" 
-    	j_mobile="15322234342" 
+    	j_contact="张先生" 
+    	j_tel="15574569406" 
+    	j_mobile="15574569406" 
     	j_province="广东省" 
     	j_city="深圳市"
     	j_county="福田区"
@@ -37,8 +37,8 @@ def compose_addorderxml(order_data):
     	pay_method="1" 
     	custid="7550069706" 
     	parcel_quantity="1" 
-    	is_docall="0" 
-    	sendstarttime=""  
+    	is_docall="1"
+    	sendstarttime="{sendtime} 09:30:00"  
     	remark="{goodname}"
         is_unified_waybill_no="1">
     </Order>
@@ -47,7 +47,7 @@ def compose_addorderxml(order_data):
     """.format(clientCode=clientCode, orderid=order_data['order_num'], getman=order_data['getman'],
                order_phone=order_data['order_phone'],
                d_province=location[0], d_city=location[1], d_county=location[2], d_address=location[3],
-               goodname=order_data['goodname'])
+               goodname=order_data['goodname'],sendtime='2012-7-30')
     return xml
 
 

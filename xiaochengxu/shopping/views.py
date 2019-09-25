@@ -12,6 +12,7 @@ from django.views.decorators.cache import cache_page
 
 from activety.models import Usercoupon
 from news.views import to_dict
+from shopnew.models import Topimg
 from shopping.fengqiao import *
 from shopping.models import *
 from shopping.pay import *
@@ -23,7 +24,7 @@ url = "https://api.mch.weixin.qq.com/pay/unifiedorder"
 appid =	'wx16360426dc864b7d'
 mch_id = '1537642871'
 trade_type = 'JSAPI'
-key = '123456789qwertyuiopasdfghjklzxcv'
+key = '1234567890QWERTYUIOPASDFGHJKLZXC'
 clientCode = 'LLYLKJSZ'
 checkWord = 'STGuVhBlDznxZbvyFFSxP5fdsyH8geFq'
 """
@@ -541,10 +542,11 @@ def refuse_return(request):
         return JsonResponse({'status': 0,'code':'该状态不支持拒绝退款'})
 
 #现场服务
-@cache_page(60*60,cache='longtime')
+#@cache_page(60*60,cache='longtime')
 def newgoods(request):
     goods = Goods.objects.all()
     types = Good_types.objects.all()
+    topimg = Topimg.objects.get(type='xianchang').img
     typecontent = []
     for type in types:
         obj = {}
@@ -565,7 +567,8 @@ def newgoods(request):
             obj_in['goods_price'] = float(good.goods_price)
             obj_in['store_num'] = good.store_num
             obj_in['description'] = good.description
-            obj_in['picture'] = good.picture
+            obj_in['picture'] = good.picture1
+            obj_in['picture_list'] = [good.picture1,good.picture2,good.picture3,good.picture4,good.picture5]
             obj_in['num'] = 0
             obj_in['type'] = type
             gooddict[id] = obj_in
@@ -578,12 +581,13 @@ def newgoods(request):
             obj_in['goods_price'] = float(good.goods_price)
             obj_in['store_num'] = good.store_num
             obj_in['description'] = good.description
-            obj_in['picture'] = good.picture
+            obj_in['picture'] = good.picture1
+            obj_in['picture_list'] = [i for i in [good.picture1,good.picture2,good.picture3,good.picture4,good.picture5] if i != '']
             obj_in['num'] = 0
             obj_in['type'] = type
             gooddict[id] = obj_in
             data[type] = gooddict
-    return JsonResponse({'status': 1, 'data': data,'typecontent':typecontent})
+    return JsonResponse({'status': 1, 'data': data,'typecontent':typecontent,'topimg':topimg})
 
 
 
@@ -711,7 +715,12 @@ def showorder_forxianchang(request):
     return JsonResponse({'waitorder':wait,'got':get})
 
 
-
+def loactionforxianchang(request):
+    loca = Locationforxianchang.objects.all()
+    list_data = []
+    for i in loca:
+        list_data.append(i.location)
+    return JsonResponse({'status':1,'location':list_data})
 
 
 

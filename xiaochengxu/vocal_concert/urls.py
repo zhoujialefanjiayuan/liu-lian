@@ -11,5 +11,6 @@ urlpatterns = [
     url(r'^thevoacl/$', views.thevoacl),
     url(r'^getpicture/$', views.getpicture),
     url(r'^addvisit/$', views.addvisit),
+    url(r'^singgerimg/$', views.singgerimg),
     url(r'^qiniuyun_uptoken/$', views.qiniuyun_uptoken),
 ]

@@ -20,5 +20,7 @@ class Picture(models.Model):
     look_num = models.IntegerField(default=0)
 
 
-
+class Singger_img(models.Model):
+    siggger_name = models.CharField(max_length=512)
+    siggger_img = models.CharField(max_length=512)
 

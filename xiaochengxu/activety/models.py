@@ -14,9 +14,10 @@ class Activety(models.Model):
     endtime = models.DateTimeField(auto_now_add=True,verbose_name='活动截止时间')
     joinnum = models.IntegerField(default=0,verbose_name='参与人数')
     isvote = models.BooleanField(default=0,verbose_name='是否有投票')
+    zhuli_target = models.IntegerField(default=0,verbose_name='助力目标数')
     getprize_userid = models.CharField(max_length=255,default=None,verbose_name='获奖人id')
     getprize_nickname = models.CharField(max_length=255,default=None,verbose_name='获奖人昵称')
-
+    getprize_num = models.IntegerField(default=1,verbose_name='获奖人数')
     logurl = models.CharField(max_length=255,default=None,verbose_name='广告图片url')
     weburl = models.CharField(max_length=255,default=None,verbose_name='跳转网页url')
     appid = models.CharField(max_length=255,default=None,verbose_name='appid')
@@ -24,6 +25,14 @@ class Activety(models.Model):
     class Meta:
         verbose_name_plural = '活动配置'
 
+
+class Zhouli_stage(models.Model):
+    percent = models.DecimalField(max_digits=7,decimal_places=2)
+    stageimg_quite = models.CharField(max_length=500,default='')
+    stageimg_active = models.CharField(max_length=500,default='')
+    stage_brand = models.CharField(max_length=500,default='')
+    stage_title = models.CharField(max_length=500,default='')
+    activety_id = models.IntegerField()
 
 class Join(models.Model):
     activety = models.ForeignKey(Activety)
@@ -53,3 +62,35 @@ class Vote(models.Model):
     num = models.IntegerField(default=0)
     class Meta:
         verbose_name_plural = '投票活动投票选项'
+
+
+class Addvote(models.Model):
+    activetyid = models.IntegerField(default=2)
+    userid = models.CharField(max_length=255)
+    choose = models.CharField(max_length=255)
+
+#首页轮播图
+#帖子
+#/news/show_detail/
+# tiezi_id = request.POST.get('id')
+# userid = request.POST.get('userid')
+
+#活动
+#/activety/theactivety/
+# userid = request.POST.get('userid')
+# activetyid = request.POST.get('activetyid')
+
+#周边商品
+#/shopnew/thezhoubian/
+#goodname = request.POST.get('goodname')
+
+#现场商品
+###直接跳转到该页面
+
+#图片回顾
+#/vocal/thevoacl/
+#projectid = int(request.GET.get('projectid'))
+class Indexswiper(models.Model):
+    type = models.CharField(max_length=100)
+    key = models.CharField(max_length=100)
+    img = models.CharField(max_length=300)

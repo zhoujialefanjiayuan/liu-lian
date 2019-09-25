@@ -21,4 +21,5 @@ urlpatterns = [
     url(r'^post_xianchangorder/$', views.post_xianchangorder),
     url(r'^qureypay_forxianchang/$', views.qureypay_forxianchang),
     url(r'^showorder_forxianchang/$', views.showorder_forxianchang),
+    url(r'^loactionforxianchang/$', views.loactionforxianchang),
 ]

@@ -31,8 +31,8 @@ class RefundAdmin(admin.ModelAdmin):
 
 @admin.register(Xianchangorder)
 class XianchangorderAdmin(admin.ModelAdmin):
-    list_display=('id', 'order_num','location_site','location_seat','order_getman','phone',
-                  'order_true_pay','show_all_goods','getorder','order_senderman','issended')
+    list_display=('issended','getorder','show_all_goods','id','location_site','location_seat','order_getman','phone','order_senderman','order_num',
+                  'order_true_pay',)
 
     ordering = ('order_senderman',)
     #只能获取未接单，和自身接单的数据
@@ -40,8 +40,8 @@ class XianchangorderAdmin(admin.ModelAdmin):
         """函数作用：使当前登录的用户只能看到自己负责的服务器"""
         qs = super(XianchangorderAdmin, self).get_queryset(request)
         if request.user.username == 'zhou':
-            return qs
-        return qs.filter(Q(order_senderman=request.user.username)|Q(order_senderman=''))
+            return qs.filter(ispay=1)
+        return qs.filter((Q(order_senderman=request.user.username)|Q(order_senderman=''))&Q(ispay=1))
 
     def has_delete_permission(self, request, obj=None):
         # 禁用删除按钮

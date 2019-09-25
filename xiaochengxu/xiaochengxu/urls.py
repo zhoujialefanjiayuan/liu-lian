@@ -25,5 +25,7 @@ urlpatterns = [
     url(r'^news/', include('news.urls', namespace='news')),
     url(r'^vocal/', include('vocal_concert.urls', namespace='vocal_concert')),
     url(r'^shop/', include('shopping.urls', namespace='shop')),
-    url(r'^activety/', include('activety.urls', namespace='activety'))
+    url(r'^activety/', include('activety.urls', namespace='activety')),
+    url(r'^delivery/', include('deliverysystem.urls', namespace='deliverysystem')),
+    url(r'^shopnew/', include('shopnew.urls', namespace='shopnew'))
 ]

@@ -11,7 +11,11 @@ class Goods(models.Model):
     goods_price = models.DecimalField(decimal_places=2,max_digits=6)
     description = models.CharField(max_length= 512,default='')
     store_num = models.IntegerField()
-    picture = models.CharField(max_length=256)
+    picture1 = models.CharField(max_length=256,default='')
+    picture2 = models.CharField(max_length=256,default='')
+    picture3 = models.CharField(max_length=256,default='')
+    picture4 = models.CharField(max_length=256,default='')
+    picture5 = models.CharField(max_length=256,default='')
 
 #商品类
 class Good_types(models.Model):
@@ -110,7 +114,7 @@ class Refund(models.Model):
 
 #现场商品订单
 class Xianchangorder(models.Model):
-    order_num = models.CharField(max_length=50, unique=True,verbose_name='订单号')
+    order_num = models.CharField(max_length=50, verbose_name='订单号')
     order_start_time = models.CharField(max_length=50,verbose_name='下单时间')
     order_userid = models.CharField(max_length=256)
     order_getman = models.CharField(max_length=50,verbose_name='收货人')
@@ -125,6 +129,7 @@ class Xianchangorder(models.Model):
     ispay = models.BooleanField(default=0,verbose_name='是否支付')
     class Meta:
         verbose_name_plural = '现场服务配送系统'
+        unique_together = ('order_num', 'order_senderman',)
     #是否送达
     def issended(self):
         """自定义一个a标签，跳转到实现复制数据功能的url"""
@@ -154,5 +159,8 @@ class Xianchangorder_detail(models.Model):
     goodprice = models.DecimalField(decimal_places=2, max_digits=7)
     ordernum = models.CharField(max_length=50,default=0)
     orderForeignKey = models.ForeignKey(Xianchangorder,default=1)
+
+class Locationforxianchang(models.Model):
+    location = models.CharField(max_length=150)
 
 

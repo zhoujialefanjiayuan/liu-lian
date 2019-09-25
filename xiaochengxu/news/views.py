@@ -162,7 +162,7 @@ def search(request):
     return JsonResponse(data)
 
 #榜单帖子,page<=5
-#@cache_page(60)
+@cache_page(5)
 def topnews(request):
     page = request.GET.get('page')
     page = int(page)
@@ -173,7 +173,7 @@ def topnews(request):
         nownews = allnews[:5]
         commentnews = sorted(allnews[5:],key=lambda item : item.comment_num,reverse=True)
         sum_news = list(chain(thetop,nownews,commentnews))
-        cache.set('sum_news', sum_news,5)
+        cache.set('sum_news', sum_news,20)
     toshownews = sum_news[(page-1)*25:page*25]
     list_data = []
     for thenews in toshownews:

@@ -43,18 +43,26 @@ def to_dict(obj):
         attr_dict[name] = value
     return attr_dict
 
-@cache_page(3)
+
 def show_all(request):
-    vocals=Vocal.objects.all()
+    vocals=Vocal.objects.order_by('-id')
+    singger_img = Singger_img.objects.all()
+    singger_list = []
+    for i in singger_img:
+        obj = {}
+        obj['siggger_img'] = i.siggger_img
+        obj['siggger_name'] =i.siggger_name
+        singger_list.append(obj)
+    if len(vocals) > 6:
+        vocals= vocals[:6]
+        ismore = True
+    else:
+        ismore = False
     list_data = []
-    singgers = set()
-    citys = set()
     for vocal in vocals:
         obj = {}
         sing = vocal.singger
         ci = vocal.city
-        singgers.add(sing)
-        citys.add(ci)
         obj['id'] = vocal.id
         obj['project_name'] = vocal.project_name
         obj['little_img'] = vocal.little_img
@@ -65,9 +73,11 @@ def show_all(request):
         obj['picture_num'] = vocal.picture_num
         obj['visit_num'] = vocal.visit_num
         list_data.append(obj)
-    return JsonResponse({'status':1,'data':list_data,'singger':list(singgers),'city':list(citys)})
+    return JsonResponse({'status':1,'data':list_data,'ismore':ismore,'singger_list':singger_list})
 
-@cache_page(3)
+
+
+@cache_page(600)
 def show_swiper(request):
     vocals = Vocal.objects.filter(isswiper = 1)
     list_data = []
@@ -87,18 +97,11 @@ def show_swiper(request):
 
 
 def search(request):
-    singger = request.GET.get('singger')
-    city = request.GET.get('city')
-    print('singger:',singger)
-    print('city:',city)
-    if singger == '全部' and city =='全部':
-        vocals = Vocal.objects.all()
-    elif singger == '全部' and city !='全部':
-        vocals = Vocal.objects.filter(city=city)
-    elif singger != '全部' and city == '全部':
+    singger = request.GET.get('singger').strip()
+    if singger !='全部':
         vocals = Vocal.objects.filter(singger__contains=singger)
     else:
-        vocals = Vocal.objects.filter(Q(singger__contains=singger)&Q(city=city))
+        vocals = Vocal.objects.all()
     list_data = []
     for vocal in vocals:
         obj = {}
@@ -132,7 +135,7 @@ def qiniuyun_uptoken(request):
     return JsonResponse({'status':1,'uptoken':uptoken,'expire':3600,'domain':'xcx.szbeacon.com'})
 
 
-@cache_page(600)
+@cache_page(10)
 def getpicture(request):
     projectid = int(request.GET.get('projectid'))
     pictures = Picture.objects.filter(project_id = projectid)
@@ -173,6 +176,9 @@ def thevoacl(request):
     obj['picture_num'] = vocal.picture_num
     obj['visit_num'] = vocal.visit_num
     return JsonResponse({'status':1,'data':obj})
+
+def singgerimg(request):
+    vocals=Vocal.objects.order_by('-visit_num')
 
 
 

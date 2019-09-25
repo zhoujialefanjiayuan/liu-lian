@@ -13,6 +13,7 @@ from activety.models import Usercoupon, Coupon
 from news.models import *
 from paly.logic_getdata_fromweixn import *
 from paly.models import *
+from paly.nickname_img_filter import *
 
 
 def helloword(request):
@@ -43,12 +44,7 @@ def getuser(request):
     encryptedData = request.POST.get('encryptedData')
     iv = request.POST.get('iv')
     code = request.POST.get('code')
-    print("encryptedData",encryptedData)
-    print("iv",iv)
-    print("code",code)
-    print('*'*100)
     d = get_unionid(code)
-    print(d)
     errcode = d.get("errcode")
     if errcode:
         errmsg =d.get("errmsg")
@@ -61,7 +57,6 @@ def getuser(request):
         user = User.objects.filter(pk=openId)
         if not user.exists():
             session_key = d["session_key"]
-            print('session_key',session_key)
             user_data = getuserdata(session_key, encryptedData, iv)
         # """
         # 参考数据
@@ -70,17 +65,23 @@ def getuser(request):
         # 'avatarUrl': 'https://wx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTKABUOialWDJn5O8LzCXjySvRF7xnTE6Xv4czhKUyT1Qb04QAzic3amCfZGoBwCafepvFZ7YmcXCpeQ/132',
         #  'unionId': 'o2o3m1HOuzMP5yEX0X2uxBzNPWC0', 'watermark': {'timestamp': 1554208372, 'appid': 'wxc50f63e5b68a91f4'}}
             nickName = user_data.get('nickName')
+            avatarUrl = user_data.get('avatarUrl')
+            #过滤字段
+            access_token = get_access_token()
+            isok_img = filterimg(avatarUrl,access_token)
+            if isok_img != 'ok':
+                return JsonResponse({"status":1,'errmsg':'您的微信头像涉嫌违规'})
+            isok_nickname = filternick(nickName,access_token)
+            if isok_nickname != 'ok':
+                return JsonResponse({"status": 1, 'errmsg': '您的微信昵称涉嫌违规'})
             gender = user_data.get('gender')
             language = user_data.get('language')
             city = user_data.get('city')
             province = user_data.get('province')
             country = user_data.get('country')
-            avatarUrl = user_data.get('avatarUrl')
             unionId = user_data.get('unionId')
             token = generate_token()
             userid = openId + str(random.randint(333, 667))
-
-
             user = User()
             user.userid = userid
             user.openId =openId
@@ -95,13 +96,13 @@ def getuser(request):
             user.token = token
             user.save()
 
-            #登录即送优惠券
-            cous = Coupon.objects.all()
-            for cou in cous:
-                usercou = Usercoupon()
-                usercou.userid = userid
-                usercou.coupon = cou
-                usercou.save()
+            # #登录即送优惠券
+            # cous = Coupon.objects.all()
+            # for cou in cous:
+            #     usercou = Usercoupon()
+            #     usercou.userid = userid
+            #     usercou.coupon = cou
+            #     usercou.save()
         else:
             user = user[0]
             userid = user.userid
